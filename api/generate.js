@@ -1,34 +1,61 @@
+// api/generate.js - Groq-compatible serverless function for Vercel.
+// Replace your existing api/generate.js with this file.
+//
+// Environment variable required:
+//   GROQ_API_KEY  (preferred)  OR  OPENAI_API_KEY (fallback)
+//
+// Endpoint used: https://api.groq.com/openai/v1/chat/completions
 
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+module.exports = async (req, res) => {
+  try {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Use POST' });
 
-module.exports = async (req, res) => { if (req.method !== 'POST') return res.status(405).send('Method not allowed'); const body = req.body; if (!body || !body.prompt) return res.status(400).json({ error: 'No prompt provided' });
+    const body = req.body || {};
+    if (!body.prompt) return res.status(400).json({ error: 'No prompt provided' });
 
-const OPENAI_KEY = process.env.OPENAI_API_KEY; if (!OPENAI_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY env variable' });
+    const API_KEY = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || null;
+    if (!API_KEY) return res.status(500).json({ error: 'Missing GROQ_API_KEY environment variable' });
 
-try { const payload = { model: 'gpt-3.5-turbo', messages: [ { role: 'system', content: 'You are a helpful assistant that writes social media captions.' }, { role: 'user', content: body.prompt } ], temperature: 0.8, max_tokens: 400 };
+    const payload = {
+      model: 'groq-llama3-8b',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant that writes social media captions.' },
+        { role: 'user', content: body.prompt }
+      ],
+      temperature: 0.8,
+      max_tokens: 400
+    };
 
-const r = await fetch(OPENAI_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${OPENAI_KEY}`
-  },
-  body: JSON.stringify(payload)
-});
+    // Vercel runtime provides fetch. If not, this will throw and be handled below.
+    if (typeof fetch === 'undefined') {
+      throw new Error('fetch is not available in this runtime');
+    }
 
-if (!r.ok) {
-  const errTxt = await r.text();
-  console.error('OpenAI error', r.status, errTxt);
-  return res.status(502).json({ error: 'OpenAI API error', detail: errTxt });
-}
+    const r = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
 
-const data = await r.json();
-const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content
-  ? data.choices[0].message.content
-  : '';
+    if (!r.ok) {
+      const detail = await r.text().catch(() => '');
+      console.error('Groq API error', r.status, detail);
+      return res.status(502).json({ error: 'Groq API error', status: r.status, detail: detail.substring(0,1000) });
+    }
 
-res.setHeader('Content-Type', 'application/json');
-res.status(200).send(JSON.stringify({ text }));
+    const data = await r.json();
+    const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content
+      ? data.choices[0].message.content
+      : '';
 
-} catch (err) { console.error(err); res.status(500).json({ error: 'Server error', detail: String(err) }); } };
+    return res.status(200).json({ text });
+  } catch (err) {
+    console.error('generate error', err && err.stack ? err.stack : String(err));
+    return res.status(500).json({ error: 'Server error', detail: String(err) });
+  }
+};
