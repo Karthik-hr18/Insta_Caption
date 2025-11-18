@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     if (!API_KEY) return res.status(500).json({ error: 'Missing GROQ_API_KEY environment variable' });
 
     const payload = {
-      model: 'groq-llama3-8b',
+      model: process.env.GROQ_MODEL || qwen/qwen3-32b,
       messages: [
         { role: 'system', content: 'You are a helpful assistant that writes social media captions.' },
         { role: 'user', content: body.prompt }
