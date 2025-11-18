@@ -1,4 +1,4 @@
-==== api/generate.js ==== // Vercel serverless function (Node.js) // Place this file at /api/generate.js
+
 
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 
