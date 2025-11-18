@@ -1,14 +1,4 @@
-<!--
-AI Caption Creator — Single project bundle
-Files included below. Copy each file into your project.
-
-Files:
-1) index.html         -> frontend (place in root /)
-2) api/generate.js    -> Vercel serverless function (place in /api/generate.js)
-3) README.md          -> deployment + env instructions
-
-IMPORTANT: create an environment variable named OPENAI_API_KEY with your OpenAI API key before deploying.
--->==== index.html ==== <!doctype html>
+ <!doctype html>
 
 <html lang="en">
 <head>
@@ -54,7 +44,9 @@ IMPORTANT: create an environment variable named OPENAI_API_KEY with your OpenAI 
   <div id="results" class="mt-4 space-y-3"></div>
 
   <hr class="my-5" />
-  <div class="text-xs text-gray-500">Tip: Add a small BuyMeACoffee button to monetize quickly. For higher volume monetize with lightweight ads once traffic grows.</div>
+  <div class="text-xs text-gray-500">
+    <button>BuyMeACoffee</button>
+  </div>
 </main>
 
 <footer class="mt-6 text-sm text-gray-500">Built with ❤️ — keep it legal. Do not generate copyrighted material without permission.</footer>
